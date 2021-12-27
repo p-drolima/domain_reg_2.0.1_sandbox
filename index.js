@@ -26,80 +26,69 @@ async function sendRegister(domain, cost, tier, ncIP, premiumPrice, registration
 
     beforeRegTime = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " +  date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + ":" + date.getMilliseconds();;
 
-    await axios.get(`https://api.namecheap.com/xml.response?ApiUser=reachnames4&ApiKey=r0d665627eb0440cea0387ecb2c3e4a46&UserName=reachnames4&Command=namecheap.domains.create&ClientIp=${ncIP}&DomainName=${domain}&Years=1&AuxBillingFirstName=Charlie&AuxBillingLastName=Coe&AuxBillingAddress1=7%20The%20Close%20,%20Muswell%20Avenue&AuxBillingStateProvince=London&AuxBillingPostalCode=N102ED&AuxBillingCountry=UK&AuxBillingPhone=+44.2084447848&AuxBillingEmailAddress=charlie@reachnames.com&AuxBillingOrganizationName=Dot31&AuxBillingCity=London&TechFirstName=Charlie&TechLastName=Coe&TechAddress1=7%20The%20Close%20,%20Muswell%20Avenue&TechStateProvince=London&TechPostalCode=N102ED&TechCountry=UK&TechPhone=+44.2084447848&TechEmailAddress=charlie@reachnames.com&TechOrganizationName=Dot31&TechCity=London&AdminFirstName=Charlie&AdminLastName=Coe&AdminAddress1=7%20The%20Close%20,%20Muswell%20Avenue&AdminStateProvince=London&AdminPostalCode=N102ED&AdminCountry=UK&AdminPhone=+44.2084447848&AdminEmailAddress=charlie@reachnames.com&AdminOrganizationName=Dot31&AdminCity=London&RegistrantFirstName=Charlie&RegistrantLastName=Coe&RegistrantAddress1=7%20The%20Close%20,%20Muswell%20Avenue&RegistrantStateProvince=London&RegistrantPostalCode=N102ED&RegistrantCountry=UK&RegistrantPhone=+44.2084447848&RegistrantEmailAddress=charlie@reachnames.com&RegistrantOrganizationName=Dot31&RegistrantCity=London&AddFreeWhoisguard=yes&WGEnabled=no&GenerateAdminOrderRefId=False`)
-    .then(response => {
+    if( status === 'ERROR' ) {
 
-        parseString(response.data, {mergeAttrs: true}, async function (err, result) {
-              
-            status = result.ApiResponse.Status[0];
+      registrationRes = 'Namecheap check registration request had an error: ' + result.ApiResponse.Errors[0].Error[0]._;
+      
+      ncRegTime = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " +  date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + ":" + date.getMilliseconds();;
 
-            if( status === 'ERROR' ) {
+      if(firstGoogleTime !== '') {
+        await prisma.wp_options.update({
+          where: {
+            option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result'
+          },
+          data: {
+            option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
+          }
+        })
+      }
 
-              registrationRes = 'Namecheap check registration request had an error: ' + result.ApiResponse.Errors[0].Error[0]._;
-              
-              ncRegTime = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " +  date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + ":" + date.getMilliseconds();;
+      else if(lastGoogleTime !== '') {
 
-              if(firstGoogleTime !== '') {
-                await prisma.wp_options.update({
-                  where: {
-                    option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result'
-                  },
-                  data: {
-                    option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
-                  }
-                })
-              }
+        await prisma.wp_options.update({
+          where: {
+            option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result_2'
+          },
+          data: {
+            option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
+          }
+        })
 
-              else if(lastGoogleTime !== '') {
+      }
+    
+    } else if(status === 'OK') {
 
-                await prisma.wp_options.update({
-                  where: {
-                    option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result_2'
-                  },
-                  data: {
-                    option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
-                  }
-                })
+      registrationRes = 'registered successfully'
+      
+      ncRegTime = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " +  date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + ":" + date.getMilliseconds();;
 
-              }
-            
-            } else if(status === 'OK') {
+      if(firstGoogleTime !== '') {
+        await prisma.wp_options.update({
+          where: {
+            option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result'
+          },
+          data: {
+            option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
+          }
+        })
+      }
+    
 
-              registrationRes = 'registered successfully'
-              
-              ncRegTime = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " +  date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + ":" + date.getMilliseconds();;
+      else if(lastGoogleTime !== '') {
 
-              if(firstGoogleTime !== '') {
-                await prisma.wp_options.update({
-                  where: {
-                    option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result'
-                  },
-                  data: {
-                    option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
-                  }
-                })
-              }
+        await prisma.wp_options.update({
+          where: {
+            option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result_2'
+          },
+          data: {
+            option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
+          }
+        })
 
-              else if(lastGoogleTime !== '') {
-
-                await prisma.wp_options.update({
-                  where: {
-                    option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result_2'
-                  },
-                  data: {
-                    option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
-                  }
-                })
-
-              }
-
-            }
-
-        });
-
-    })
+      }
     
   }
+}
   
   else if(tier === 'premium' ) {
 
@@ -107,79 +96,66 @@ async function sendRegister(domain, cost, tier, ncIP, premiumPrice, registration
 
         beforeRegTime = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " +  date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + ":" + date.getMilliseconds();;
 
-        await axios.get(`https://api.namecheap.com/xml.response?ApiUser=reachnames4&ApiKey=r0d665627eb0440cea0387ecb2c3e4a46&UserName=reachnames4&Command=namecheap.domains.create&ClientIp=${ncIP}&DomainName=${domain}&Years=1&AuxBillingFirstName=Charlie&AuxBillingLastName=Coe&AuxBillingAddress1=7%20The%20Close%20,%20Muswell%20Avenue&AuxBillingStateProvince=London&AuxBillingPostalCode=N102ED&AuxBillingCountry=UK&AuxBillingPhone=+44.2084447848&AuxBillingEmailAddress=charlie@reachnames.com&AuxBillingOrganizationName=Dot31&AuxBillingCity=London&TechFirstName=Charlie&TechLastName=Coe&TechAddress1=7%20The%20Close%20,%20Muswell%20Avenue&TechStateProvince=London&TechPostalCode=N102ED&TechCountry=UK&TechPhone=+44.2084447848&TechEmailAddress=charlie@reachnames.com&TechOrganizationName=Dot31&TechCity=London&AdminFirstName=Charlie&AdminLastName=Coe&AdminAddress1=7%20The%20Close%20,%20Muswell%20Avenue&AdminStateProvince=London&AdminPostalCode=N102ED&AdminCountry=UK&AdminPhone=+44.2084447848&AdminEmailAddress=charlie@reachnames.com&AdminOrganizationName=Dot31&AdminCity=London&RegistrantFirstName=Charlie&RegistrantLastName=Coe&RegistrantAddress1=7%20The%20Close%20,%20Muswell%20Avenue&RegistrantStateProvince=London&RegistrantPostalCode=N102ED&RegistrantCountry=UK&RegistrantPhone=+44.2084447848&RegistrantEmailAddress=charlie@reachnames.com&RegistrantOrganizationName=Dot31&RegistrantCity=London&AddFreeWhoisguard=yes&WGEnabled=no&GenerateAdminOrderRefId=False&IsPremiumDomain=True&PremiumPrice=${premiumPrice}&EapFee=0.0`)
-        .then(response => {
-
-          parseString(response.data, {mergeAttrs: true}, async function (err, result) {
-            
-            status = result.ApiResponse.Status[0];
-
-            if( status === 'ERROR' ) {
+        if( status === 'ERROR' ) {
               
-                registrationRes = 'Namecheap check registration request had an error: ' + result.ApiResponse.Errors[0].Error[0]._;
-                
-                ncRegTime = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " +  date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + ":" + date.getMilliseconds();;
-                
-              //send email + block domain name in wp db
-
-              if(firstGoogleTime !== '') {
-                await prisma.wp_options.update({
-                  where: {
-                    option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result'
-                  },
-                  data: {
-                    option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
-                  }
-                })
-              }
-
-              else if(lastGoogleTime !== '') {
-
-                await prisma.wp_options.update({
-                  where: {
-                    option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result_2'
-                  },
-                  data: {
-                    option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
-                  }
-                })
-
-              }
-              
-            } else if( status === 'OK' ) {
-
-              if(firstGoogleTime !== '') {
-                await prisma.wp_options.update({
-                  where: {
-                    option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result'
-                  },
-                  data: {
-                    option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
-                  }
-                })
-              }
-
-              else if(lastGoogleTime !== '') {
-
-                await prisma.wp_options.update({
-                  where: {
-                    option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result_2'
-                  },
-                  data: {
-                    option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
-                  }
-                })
-
-              }
-
-            }
-
-          });
+          registrationRes = 'Namecheap check registration request had an error: ' + result.ApiResponse.Errors[0].Error[0]._;
           
-        })
-        .catch(error => {
-          // send email over error on actual request
-        });
+          ncRegTime = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " +  date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + ":" + date.getMilliseconds();;
+          
+        //send email + block domain name in wp db
+
+        if(firstGoogleTime !== '') {
+          await prisma.wp_options.update({
+            where: {
+              option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result'
+            },
+            data: {
+              option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
+            }
+          })
+        }
+
+        else if(lastGoogleTime !== '') {
+
+          await prisma.wp_options.update({
+            where: {
+              option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result_2'
+            },
+            data: {
+              option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
+            }
+          })
+
+        }
+        
+      } else if( status === 'OK' ) {
+
+        if(firstGoogleTime !== '') {
+          await prisma.wp_options.update({
+            where: {
+              option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result'
+            },
+            data: {
+              option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
+            }
+          })
+        }
+
+        else if(lastGoogleTime !== '') {
+
+          await prisma.wp_options.update({
+            where: {
+              option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_registration_result_2'
+            },
+            data: {
+              option_value: 'Namecheap response: ' + registrationRes + '\n\n' + 'Google Request: ' + lastGoogleTime + '\n\n' +  'Before Registration attempt: ' + beforeRegTime + '\n\n'  + 'After Registration attempt: ' + ncRegTime
+            }
+          })
+
+        }
+
+      }
+
       }
       else {
         registrationRes = 'Price higher than set cost'
@@ -191,7 +167,7 @@ async function sendRegister(domain, cost, tier, ncIP, premiumPrice, registration
 
 }
 
-async function callGoogle(domain, cost, ncIP) {
+async function callGoogle(domain, cost) {
 
     console.log(domain);
 
@@ -207,51 +183,39 @@ async function callGoogle(domain, cost, ncIP) {
       firstNamecheap = true;
       // call namecheap availability
 
-      await axios.get(`https://api.namecheap.com/xml.response?ApiUser=reachnames4&ApiKey=r0d665627eb0440cea0387ecb2c3e4a46&UserName=reachnames4&Command=namecheap.domains.check&ClientIp=${ncIP}&DomainList=${domain}`)
-        .then( response => {
+      status = result.ApiResponse.Status[0];
 
-            // cache this in to json file for all 16 ips to access
+      if(status === 'OK') {
+
+          premiumDomain = result.ApiResponse.CommandResponse[0].DomainCheckResult[0].IsPremiumName[0];
+
+          if(premiumDomain === 'true') {
+            premiumPrice = parseFloat(result.ApiResponse.CommandResponse[0].DomainCheckResult[0].PremiumRegistrationPrice[0]).toFixed(2)
+            premiumPrice = premiumPrice.toString();
+
+            namecheapData = { 
+              
+              domain: domain,
+              price: premiumPrice,
+
+            };
             
-            console.log('Namecheap API response: ', response.data);
+            namecheapData = JSON.stringify(namecheapData);
+            fs.writeFileSync(`${domain}.json`, namecheapData);
 
-            parseString(response.data, {mergeAttrs: true},  function (err, result) {
+          }
 
-                status = result.ApiResponse.Status[0];
+      } 
+      
+      else if(status === 'ERROR') {
 
-                if(status === 'OK') {
-
-                    premiumDomain = result.ApiResponse.CommandResponse[0].DomainCheckResult[0].IsPremiumName[0];
-
-                    if(premiumDomain === 'true') {
-                      premiumPrice = parseFloat(result.ApiResponse.CommandResponse[0].DomainCheckResult[0].PremiumRegistrationPrice[0]).toFixed(2)
-                      premiumPrice = premiumPrice.toString();
-
-                      namecheapData = { 
-                        
-                        domain: domain,
-                        price: premiumPrice,
-
-                      };
-                      
-                      namecheapData = JSON.stringify(namecheapData);
-                      fs.writeFileSync(`${domain}.json`, namecheapData);
-
-                    }
-
-                } 
-                
-                else if(status === 'ERROR') {
-
-                    registrationRes = 'Namecheap check availability request had an error: ' + result.ApiResponse.Errors[0].Error[0]._;
-                    
-                }
-
-            })
-          })
+          registrationRes = 'Namecheap check availability request had an error: ' + result.ApiResponse.Errors[0].Error[0]._;
+          
+      }
 
     }
 
-    result = await axios.get(`https://pubapi-dot-domain-registry.appspot.com/check?domain=${domain}`)
+    result = await axios.post('http://127.0.0.1:3000')
     .then(async function (data) {
         // handle success
 
@@ -322,70 +286,15 @@ async function callGoogle(domain, cost, ncIP) {
                 }
             })
         }
+      })
 
-        let rdap = axios.get(`https://www.registry.google/rdap/domain/${domain}`)
-        .then( async function (rdapData) {
-
-          rdapEvents = rdapData.data.events;
-          rdapDomainStatus = rdapData.data.status
-          rdapEvents.map( (v) => {
-            console.log(v.eventAction)
-            switch(v.eventAction) {
-              case 'registration':
-                lastRegistrar = 'Registrar: ' + v.eventActor;
-                lastRegistrationTime = 'Registration Time: ' + v.eventDate
-                break;
-            }
-          });
-
-          await prisma.wp_options.update({
-            where: {
-              option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_rdap_data'
-            },
-            data: {
-              option_value: lastRegistrar + '\n\n' + lastRegistrationTime + '\n\n' + 'ICANN STATUS: ' + rdapDomainStatus
-            }
-          })
-
-        })
-        .catch( function (rdapError) {
-
-          console.log('rdap ERROR: ', rdapError)
-
-        })
-
-        return result;
-
-    })
-    .catch(async function (error) {
-        await prisma.wp_options.update({
-            where: {
-              option_name: 'options_ipv6_0_add_ipv6s_' + env_ip + '_status_ip_ip_health'
-            },
-            data: {
-              option_value: 'Google request error: ' + error.data
-            }
-          })
-        console.log('Error Full: ', error);
-
-        result = error.data;
-
-    })
-
-}
+  }
 
 async function getDomains() {
 
   let date = new Date();
 
-  console.log('current minute:: ', date.getMinutes())
-  console.log('is true:: ', date.getMinutes() === 38)
-
   if(firstWordpress === false || date.getMinutes() === 0 || date.getMinutes() === 20 || date.getMinutes() === 40) {
-
-    console.log('WP:: ', typeof date.getMinutes());
-
-    clashDate = date.getDate().toString() + date.getMonth().toString() + date.getFullYear().toString() + date.getHours().toString() + date.getMinutes().toString();
     
     firstWordpress = true
 
@@ -419,13 +328,13 @@ async function getDomains() {
     
     domains.forEach(function(obj, index, collection) {
 
-      const domain = obj.option_value.toString();
+        const domain = obj.option_value.toString();
 
         setTimeout(function() {
 
             (async () => {
 
-                callGoogle(domain, maxCost, ncIP);
+                callGoogle(domain, maxCost);
                 
                 getDomains();
             
